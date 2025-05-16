@@ -1,0 +1,25 @@
+Here is the problem as stated
+
+Write a simple, performant in-memory cache system
+- with expiration.
+
+Your cache system
+- should allow storing key-value pairs,
+- retrieving values by keys
+- and automatically removing items that are expired.
+
+In addition, your code
+- should be thread-safe,
+- handle errors appropriately
+- and follow standard GO idiomatic practices.
+
+We value
+- well-documented
+- clean code
+- that is modular
+- and easy to extend in the future.
+
+After completing the project, please consider what you’d do differently and/or what you’d add if you had more time.
+
+Assessment Delivery - Present your assessment to a public repository of your choice; github, gitlab, bitbucket, etc. Send the link to me (Tyler via email) when you complete it. I will forward it on to the team for review and will reach back out with next steps. 
+
