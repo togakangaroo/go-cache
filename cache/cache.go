@@ -67,7 +67,7 @@ func NewCache(defaultExpiration, cleanupInterval time.Duration, clock clockwork.
 }
 // Create a cache with some obvious defaults set. See NewCache for more complex version
 func NewDefaultCache(defaultExpiration time.Duration) *Cache {
-	return NewCache(defaultExpiration, 5 * time.Second, clockwork.NewRealClock())
+	return NewCache(defaultExpiration, 30 * time.Second, clockwork.NewRealClock())
 }
 
 // Add an item to the cache with the default expiration time
@@ -141,6 +141,7 @@ func (c *Cache) startCleanupTimer() {
 func (c *Cache) deleteExpired() {
 	c.logger.Debug("Cleaning up expired items.")
 	now := c.clock.Now().UnixNano()
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
