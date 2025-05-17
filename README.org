@@ -21,5 +21,65 @@ We value
 
 After completing the project, please consider what you’d do differently and/or what you’d add if you had more time.
 
-Assessment Delivery - Present your assessment to a public repository of your choice; github, gitlab, bitbucket, etc. Send the link to me (Tyler via email) when you complete it. I will forward it on to the team for review and will reach back out with next steps. 
+Assessment Delivery - Present your assessment to a public repository of your choice; github, gitlab, bitbucket, etc. Send the link to me (Tyler via email) when you complete it. I will forward it on to the team for review and will reach back out with next steps.
 
+* Test Cases
+
+** Unit tests of basic functionality
+
+- When we have a cache with default expiration of `1s`
+  - When user puts an item under the key `foo` into the cache
+    - THEN `foo` is found in the cache
+    - When user deletes the key `foo`
+      - THEN item `foo` is not found in cache
+    - When user puts another item under they key `bar` into the cache
+      - When fetching item `foo`
+        - THEN correct value of `foo` is returned from the cache
+      - When fetching item `bar`
+        - THEN correct value of `bar` is returned from the cache
+    - When 0.5s elapses
+      - THEN `foo` is found in cache
+      - When 0.6s elapses
+        - THEN `foo` is not found in cache
+      - When user puts foo into the cache again
+        - When 0.6s elapses
+          - THEN `foo` is still in cache
+          - When 0.5s elapses
+            - THEN `foo` is not found in cache
+
+  - When user puts an item under the key `bar` into the cache with a custom expiration of `2s`
+    - When 1.1s elapses
+      - THEN `bar` is found in cache
+      - When 1s elapses
+        - THEN `bar` is not found in cache
+
+  - When user puts an item under the key `bar` into the cache with no expiration
+    - When 10s elapses
+      - THEN `bar` is found in cache
+
+Thread safety and load tests
+
+- Thread safety tests
+  - When 10 goroutines simultaneously write different keys to the cache
+    - THEN all items should be correctly stored
+    - When fetching each key
+      - THEN each value is correctly associated with its key
+
+  - When 5 goroutines write to the same key with different values in rapid succession
+    - THEN only the last value should be stored
+    - When fetching the key
+      - THEN it returns the last value written
+
+  - When 5 goroutines are writing while 5 goroutines are reading the same keys
+    - THEN no race conditions or panics should occur
+    - THEN readers should either get the old value or the new value, never a partial/corrupt value
+
+- When setting a nil value in the cache
+  - THEN it should be stored and retrievable
+
+- When setting an item with immediate expiration (0s)
+  - THEN it should not be retrievable immediately after
+
+- When the cache is under memory pressure with many items
+  - THEN expired items should still be cleaned up
+  - THEN performance should degrade gracefully
