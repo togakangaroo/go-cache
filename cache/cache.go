@@ -9,35 +9,6 @@ import (
 	clockwork "github.com/jonboulle/clockwork"
 )
 
-func setupLogger() *slog.Logger {
-	logger := slog.Default()
-	if logLevelStr := os.Getenv("LOG_LEVEL"); logLevelStr != "" {
-		var logLevel slog.Level
-		switch logLevelStr {
-		case "DEBUG":
-			logLevel = slog.LevelDebug
-		case "INFO":
-			logLevel = slog.LevelInfo
-		case "WARN":
-			logLevel = slog.LevelWarn
-		case "ERROR":
-			logLevel = slog.LevelError
-		default:
-			// Default to INFO if unrecognized level
-			logLevel = slog.LevelInfo
-		}
-
-		loggerOpts := &slog.HandlerOptions{Level: logLevel}
-		logger = slog.New(slog.NewTextHandler(os.Stderr, loggerOpts))
-	}
-	return logger
-}
-
-type Item struct {
-	Value      any
-	Expiration int64
-}
-
 type Cache struct {
 	items             map[string]Item
 	defaultExpiration time.Duration
@@ -65,18 +36,20 @@ func NewCache(defaultExpiration, cleanupInterval time.Duration, clock clockwork.
 
 	return cache
 }
-// Create a cache with some obvious defaults set. See NewCache for more complex version
+// Create a cache with some obvious defaults set. This is probably the version that you want.
+// See NewCache for more complex version
 func NewDefaultCache(defaultExpiration time.Duration) *Cache {
 	return NewCache(defaultExpiration, 30 * time.Second, clockwork.NewRealClock())
 }
 
-// Add an item to the cache with the default expiration time
+// Add an item to the cache with the default expiration time.
+// If the item already exists in the cache it will be overridden and its expiration time updated.
 func (c *Cache) Set(key string, value any) {
 	c.SetWithExpiration(key, value, c.defaultExpiration)
 }
 
-// Addn item to the cache with a custom expiration time
-// If expiration is 0, the item never expires
+// Add an item to the cache with a custom expiration time.
+// If expiration is 0, the item never expires.
 func (c *Cache) SetWithExpiration(key string, value any, expiration time.Duration) {
 	var exp int64
 	if 0 < expiration {
@@ -121,6 +94,34 @@ func (c *Cache) Get(key string) (any, bool) {
 	return item.Value, true
 }
 
+type Item struct {
+	Value      any
+	Expiration int64
+}
+
+func setupLogger() *slog.Logger {
+	logger := slog.Default()
+	if logLevelStr := os.Getenv("LOG_LEVEL"); logLevelStr != "" {
+		var logLevel slog.Level
+		switch logLevelStr {
+		case "DEBUG":
+			logLevel = slog.LevelDebug
+		case "INFO":
+			logLevel = slog.LevelInfo
+		case "WARN":
+			logLevel = slog.LevelWarn
+		case "ERROR":
+			logLevel = slog.LevelError
+		default:
+			// Default to INFO if unrecognized level
+			logLevel = slog.LevelInfo
+		}
+
+		loggerOpts := &slog.HandlerOptions{Level: logLevel}
+		logger = slog.New(slog.NewTextHandler(os.Stderr, loggerOpts))
+	}
+	return logger
+}
 
 // starts the cleanup timer
 func (c *Cache) startCleanupTimer() {
