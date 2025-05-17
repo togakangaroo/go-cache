@@ -1,11 +1,37 @@
 package cache
 
 import (
+	"log/slog"
+	"os"
 	"sync"
 	"time"
 
 	clockwork "github.com/jonboulle/clockwork"
 )
+
+func setupLogger() *slog.Logger {
+	logger := slog.Default()
+	if logLevelStr := os.Getenv("LOG_LEVEL"); logLevelStr != "" {
+		var logLevel slog.Level
+		switch logLevelStr {
+		case "DEBUG":
+			logLevel = slog.LevelDebug
+		case "INFO":
+			logLevel = slog.LevelInfo
+		case "WARN":
+			logLevel = slog.LevelWarn
+		case "ERROR":
+			logLevel = slog.LevelError
+		default:
+			// Default to INFO if unrecognized level
+			logLevel = slog.LevelInfo
+		}
+
+		loggerOpts := &slog.HandlerOptions{Level: logLevel}
+		logger = slog.New(slog.NewTextHandler(os.Stderr, loggerOpts))
+	}
+	return logger
+}
 
 type Item struct {
 	Value      any
@@ -19,6 +45,7 @@ type Cache struct {
 	stopCleanup       chan any
 	clock             clockwork.Clock
 	mu                sync.RWMutex
+	logger            *slog.Logger
 }
 
 // Use NewDefaultCache or this to create a Cache instance, prefer not to refernece it directly
@@ -29,6 +56,7 @@ func NewCache(defaultExpiration, cleanupInterval time.Duration, clock clockwork.
 		cleanupInterval:   cleanupInterval,
 		stopCleanup:       make(chan any),
 		clock:             clock,
+		logger:            setupLogger(),
 	}
 
 	if cleanupInterval > 0 {
@@ -86,6 +114,7 @@ func (c *Cache) Get(key string) (any, bool) {
 	}
 
 	if 0 < item.Expiration && item.Expiration < c.clock.Now().UnixNano() {
+		c.logger.Debug("Item with key `", key, "` found but expired. Not returning.")
 		return nil, false
 	}
 
@@ -110,6 +139,7 @@ func (c *Cache) startCleanupTimer() {
 
 // Force eviction of all expired items
 func (c *Cache) deleteExpired() {
+	c.logger.Debug("Cleaning up expired items.")
 	now := c.clock.Now().UnixNano()
 	c.mu.Lock()
 	defer c.mu.Unlock()
