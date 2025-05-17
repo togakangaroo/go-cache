@@ -22,7 +22,7 @@ func (ctx CacheTestContext) WithT(t *testing.T) CacheTestContext {
 	}
 }
 
-func assertKeyAndExpectedValueInCache(key string, expected interface{}, x CacheTestContext) {
+func assertKeyAndExpectedValueInCache(key string, expected any, x CacheTestContext) {
 	val, found := x.Cache.Get(key)
 
 	x.t.Run(fmt.Sprintf("THEN `%s` is found in the cache", key), func(t *testing.T) {
@@ -131,5 +131,52 @@ func TestCacheBasicOperations(t *testing.T) {
 			})
 		})
 	})
+}
 
+func TestCacheCleanup(t *testing.T) {
+	t.Run("When we have a cache with default expiration of 1s and cleanup interval of `2s`", func(t *testing.T) {
+		clock := clockwork.NewFakeClock()
+		cache := NewCache(1*time.Second, 2*time.Second, clock)
+		defer cache.Stop()
+
+		// Add items to the cache
+		cache.Set("item1", "value1")
+		cache.Set("item2", "value2")
+
+		cache.mu.RLock()
+		if len(cache.items) != 2 {
+			t.Errorf("Expected 2 items in cache, got %d", len(cache.items))
+		}
+		cache.mu.RUnlock()
+
+		// Advance time past expiration but before cleanup
+		step := 100*time.Millisecond
+		for range (1100 * time.Millisecond/step) {
+			clock.Advance(step)
+			time.Sleep(100 * time.Microsecond)
+		}
+
+		val, found := cache.Get("item1")
+		if found {
+			t.Errorf("Expected item1 to be expired, but got %v", val)
+		}
+
+		cache.mu.RLock()
+		if len(cache.items) != 2 {
+			t.Errorf("Expected 2 items still in internal map before cleanup, got %d", len(cache.items))
+		}
+		cache.mu.RUnlock()
+
+		// Advance time to trigger cleanup
+		for range (1000 * time.Millisecond/step) {
+			clock.Advance(step)
+			time.Sleep(100 * time.Microsecond)
+		}
+
+		cache.mu.RLock()
+		if len(cache.items) != 0 {
+			t.Errorf("Expected 0 items in cache after cleanup, got %d", len(cache.items))
+		}
+		cache.mu.RUnlock()
+	})
 }

@@ -21,7 +21,7 @@ type Cache struct {
 	mu                sync.RWMutex
 }
 
-// Use this to create a Cache instance, prefer not to refernece it directly
+// Use NewDefaultCache or this to create a Cache instance, prefer not to refernece it directly
 func NewCache(defaultExpiration, cleanupInterval time.Duration, clock clockwork.Clock) *Cache {
 	cache := &Cache{
 		items:             make(map[string]Item),
@@ -36,6 +36,10 @@ func NewCache(defaultExpiration, cleanupInterval time.Duration, clock clockwork.
 	}
 
 	return cache
+}
+// Create a cache with some obvious defaults set. See NewCache for more complex version
+func NewDefaultCache(defaultExpiration time.Duration) *Cache {
+	return NewCache(defaultExpiration, 5 * time.Second, clockwork.NewRealClock())
 }
 
 // Add an item to the cache with the default expiration time
@@ -91,12 +95,12 @@ func (c *Cache) Get(key string) (any, bool) {
 
 // starts the cleanup timer
 func (c *Cache) startCleanupTimer() {
-	ticker := time.NewTicker(c.cleanupInterval)
+	ticker := c.clock.NewTicker(c.cleanupInterval)
 	defer ticker.Stop()
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-ticker.Chan():
 			c.deleteExpired()
 		case <-c.stopCleanup:
 			return
@@ -117,7 +121,7 @@ func (c *Cache) deleteExpired() {
 	}
 }
 
-// Stop stops the cleanup
+// Stops the cleanup and properly disposes of the cache
 func (c *Cache) Stop() {
 	if 0 < c.cleanupInterval {
 		c.stopCleanup <- true

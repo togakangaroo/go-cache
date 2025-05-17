@@ -45,7 +45,7 @@ func TestMath(t *testing.T) {
 }
 
 func TestMyFunc(t *testing.T) {
-	var tickCount int
+	tickCount := 0
 	c := clockwork.NewFakeClock()
 	ticker := c.NewTicker(1 * time.Second)
 	defer ticker.Stop()
@@ -53,12 +53,17 @@ func TestMyFunc(t *testing.T) {
 	// Start goroutine to count ticks
 	go func() {
 		for range ticker.Chan() {
+			fmt.Printf("incrementing %v\n", tickCount)
 			tickCount++
 		}
 	}()
 
-	// Advance the clock by 5.5 seconds
-	c.Advance(5 * time.Second + 500 * time.Millisecond)
+	// Advance the clock by 5.5 seconds while leaving time for tick counters
+	step := 100*time.Millisecond
+	for range (5500 * time.Millisecond/step) {
+		c.Advance(step)
+		time.Sleep(100 * time.Microsecond)
+	}
 
 	// Assert that tickCount is 5
 	if tickCount != 5 {
