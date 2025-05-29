@@ -1,4 +1,4 @@
-This is a simple, performant in-memory cache system with expiration functionality, implemented in Go.
+This is a simple, performant, in-memory cache system with expiration functionality. Implemented in Go.
 
 # Features
 
@@ -13,18 +13,18 @@ This is a simple, performant in-memory cache system with expiration functionalit
 
 # Not Features
 
-Features that could be implemented eventually but are not handled here
+Features that could be implemented eventually but are not handled here.
 - Generics support. Allow people to specify the type they expect back. Maybe there is even some way to have Go remember.
-- Special handling for complex objects that themselves might be executing code from other threads
-- Advanced clean up strategies and eviction policies
-- Refreshing a cache item based on its time of access
-- Force cleanup
-- Max capacitly limit and automated eviction of older items
-- Sharding and distribution across multiple nodes
-- Statistics tracking and more elaborate logging
-- Extension points and hooks for events. While setting up channels for expiration and setting events is easy, their specific design should be considered carefully.
-- More expressive unit tests. Workflow tests like this should follow a tree structure, but the fact that go-test doesn't reset state between nested Run blocks state means implementing this is non-trivial and out of scope
-- Load tests. While the thread safety mechanism here is quite simple, it would be a good idea to kick its tires by spinning up a test with loads of threads accessing the cache all at once. However, writing that test isn't completely straightforward and I'm happy to rely on the straightforwardness of the locking mechanism used at the moment
+- Special handling for complex objects that themselves might be executing code from other threads.
+- Advanced clean up strategies and eviction policies.
+- Refreshing a cache item based on its time of access.
+- Ability to force cleanup manually.
+- Max capacitly limit and automated eviction of older items.
+- Sharding and distribution across multiple nodes.
+- Statistics tracking and more elaborate logging.
+- Extension points and hooks for events. While setting up channels for expiration and broadcasting events to these is easy, their specific design should be considered carefully.
+- More expressive unit tests. Workflow tests like this should follow a tree structure, but the fact that go-test doesn't reset state between nested Run blocks state means implementing this is non-trivial and out of scope.
+- Load tests. While the thread safety mechanism here is quite simple, it would be a good idea to kick its tires by spinning up a test with loads of threads accessing the cache all at once. However, writing that test isn't completely straightforward and I'm happy to rely on the straightforwardness of the locking mechanism used at the moment.
 
 # Usage
 
